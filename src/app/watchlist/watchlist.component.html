@@ -1,35 +1,93 @@
-<div class="watchlist-container">
-  <h2>My Watchlist</h2>
+<!-- src/app/watchlist/watchlist.component.html -->
 
-  <ng-container *ngIf="watchlist$ | async as movies; else loading">
-    
-    <div *ngIf="movies.length > 0; else emptyWatchlist" class="watchlist-grid">
-      
-      <div *ngFor="let movie of movies" class="movie-card">
-        
-        <img class="movie-poster" 
-             [src]="movie.posterUrl || 'https://via.placeholder.com/220x330.png?text=No+Image'" 
-             [alt]="movie.title + ' Poster'">
-        <div class="movie-info">
-          <h3>{{ movie.title }}</h3>
-          <p>{{ movie.category }}</p>
-        </div>
-        <button class="btn-remove" (click)="removeFromWatchlist(movie.id)">
-          Remove
-        </button>
-      </div>
-    </div>
+<!-- Header / actions -->
+<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+  <h1 class="text-2xl font-bold tracking-tight">My Watchlist</h1>
 
-    <ng-template #emptyWatchlist>
-      <div class="empty-state">
-        <p>Your watchlist is empty.</p>
-        <p>Go to the movie list to add some movies!</p>
-      </div>
-    </ng-template>
-
-  </ng-container>
-
-  <ng-template #loading>
-    <p>Loading watchlist...</p>
-  </ng-template>
+  <div class="flex gap-2">
+    <a routerLink="/movies/list" class="px-3 py-2 rounded-lg border text-sm hover:bg-gray-50">
+      ← Browse Movies
+    </a>
+    <button
+      type="button"
+      (click)="watchlist.clear()"
+      class="px-3 py-2 rounded-lg border text-sm hover:bg-gray-50"
+      [disabled]="!filteredMovies.length"
+    >
+      Clear all
+    </button>
+  </div>
 </div>
+
+<!-- Filter Bar (Category only) -->
+<div class="mb-4 flex flex-wrap items-center gap-3">
+  <label class="text-sm font-medium">Category:</label>
+  <select
+    class="border rounded-md px-3 py-1.5 text-sm"
+    [(ngModel)]="selectedCategory"
+    (change)="applyFilter()"
+  >
+    <option *ngFor="let c of categories" [ngValue]="c">{{ c }}</option>
+  </select>
+</div>
+
+<!-- Cards -->
+<ng-container *ngIf="filteredMovies.length; else empty">
+  <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <li
+      *ngFor="let m of filteredMovies; let i = index; trackBy: trackById"
+      class="relative rounded-xl border shadow-sm overflow-hidden bg-white hover:shadow-md transition-shadow"
+    >
+      <a [routerLink]="['/movies', m.id]" class="block">
+        <div class="relative w-full bg-gray-100 aspect-[2/3] overflow-hidden">
+          <img
+            [src]="m.posterUrl || FALLBACK"
+            (error)="onImgError($event)"
+            [alt]="m.title"
+            class="absolute inset-0 w-full h-full object-cover"
+            [attr.loading]="i === 0 ? 'eager' : 'lazy'"
+            [attr.fetchpriority]="i === 0 ? 'high' : null"
+            decoding="async"
+          />
+        </div>
+
+        <div class="p-3">
+          <h3 class="text-base font-semibold leading-tight line-clamp-1">
+            {{ m.title }} <span class="text-xs opacity-70">({{ m.releaseYear }})</span>
+          </h3>
+          <p class="mt-1 text-sm opacity-80 line-clamp-2">
+            {{ m.description }}
+          </p>
+        </div>
+      </a>
+
+      <!-- Buttons -->
+      <div class="px-3 pb-3 flex items-center gap-2 relative z-10">
+        <button
+          type="button"
+          (click)="$event.stopPropagation(); toggleWatchlist(m.id)"
+          class="px-3 py-1.5 rounded-md text-sm transition-colors"
+          [class.bg-red-600]="isIn(m.id)"
+          [class.text-white]="isIn(m.id)"
+          [class.bg-blue-600]="!isIn(m.id)"
+          [class.text-white]="!isIn(m.id)"
+        >
+          {{ isIn(m.id) ? 'Remove ✕' : 'Add to Watchlist' }}
+        </button>
+
+        <a
+          [routerLink]="['/movies', m.id]"
+          class="px-3 py-1.5 rounded-md border text-sm hover:bg-gray-50 transition-colors"
+          (click)="$event.stopPropagation()"
+        >
+          Details
+        </a>
+      </div>
+    </li>
+  </ul>
+</ng-container>
+
+<!-- ✅ Define the template the *ngIf refers to -->
+<ng-template #empty>
+  <div class="p-6 text-center opacity-70">No movies found.</div>
+</ng-template>

@@ -1,46 +1,105 @@
+// src/movies/list/list.component.ts
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+
+import { MovieService, Movie } from '../../core/services/movie.service';
 import { Category } from '../../app/enums/category.enum';
 import { WatchlistService } from '../../app/services/watchlist.service';
-import { Movie, MovieService } from '../../core/services/movie.service';
+
+type MovieId = Movie['id'];
+
+// Module-level constant (safe to reuse anywhere in this file)
+const FALLBACK = 'https://placehold.co/400x600?text=No+Image';
+
 
 @Component({
   selector: 'app-list',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './list.component.html',
+  changeDetection: ChangeDetectionStrategy.Default,
 })
-export class ListComponent implements OnInit {
-  private readonly watchlistService = inject(WatchlistService)
+export class ListComponent {
+  // expose for template usage if needed
+  readonly FALLBACK = FALLBACK;
+
+  categories: (Category | 'All')[] = ['All', ...Object.values(Category)];
+
+  private _selectedCategory: Category | 'All' = 'All';
+  get selectedCategory(): Category | 'All' {
+    return this._selectedCategory;
+  }
+  set selectedCategory(val: Category | 'All') {
+    this._selectedCategory = val;
+    this.applyFilter();
+  }
+
   movies: Movie[] = [];
-  readonly FALLBACK = 'https://placehold.co/400x600?text=No+Image';
-  selectedCategory: Category | null = null;
+  filteredMovies: Movie[] = [];
 
-  constructor(private movieSvc: MovieService) { }
-
-  ngOnInit(): void {
-    this.movieSvc.getAll().subscribe(ms => this.movies = ms);
+  constructor(
+    private moviesService: MovieService,
+    public watchlist: WatchlistService // public so template can call has()
+  ) {
+    this.moviesService.getMovies().subscribe((ms) => {
+      this.movies = ms ?? [];
+      this.applyFilter();
+    });
   }
 
-  onImgError(ev: Event) {
-    const img = ev.target as HTMLImageElement | null;
-    if (img && img.src !== this.FALLBACK) img.src = this.FALLBACK;
+  applyFilter(): void {
+    const sel = this._selectedCategory;
+    this.filteredMovies =
+      sel === 'All' ? this.movies.slice() : this.movies.filter((m) => m.category === sel);
   }
 
-
-  addToWatchlist(movieId: string): void {
-    this.watchlistService.addToWatchlist(movieId);
+  add(id: MovieId): void {
+    this.watchlist.add(String(id));
+    this.filteredMovies = [...this.filteredMovies];
   }
 
-  get filteredMovies(): Movie[] {
-    if (!this.selectedCategory) return this.movies;
-    return this.movies.filter(m => m.category === this.selectedCategory);
+  toggleWatchlist(id: MovieId): void {
+    this.watchlist.toggle(String(id));
+    this.filteredMovies = [...this.filteredMovies];
   }
 
-  get categories(): string[] {
-    return Object.values(Category);
+  isIn(id: MovieId): boolean {
+    return this.watchlist.has(String(id));
   }
+
+  trackById(_: number, m: Movie) {
+    return m.id;
+  }
+
+  // --- IMAGE HELPERS (inside the class) ---
+
+  private normalizePoster(url?: string): string {
+    if (!url) return FALLBACK;
+    let u = url.trim();
+
+    // prepend protocol if starts with '//' or missing protocol
+    if (/^\/\//.test(u)) u = 'https:' + u;
+    if (!/^https?:\/\//i.test(u)) u = 'https://' + u.replace(/^\/+/, '');
+
+    return u;
+  }
+
+  // Use this for [src] binding
+  getPoster(m: { posterUrl?: string }): string {
+    return this.normalizePoster(m.posterUrl) || FALLBACK;
+  }
+
+onImgError(ev: Event): void {
+  const img = ev.target as HTMLImageElement | null;
+  if (!img) return;
+
+  if (img.getAttribute('data-fallback-applied') === '1') return;
+
+  img.src = FALLBACK;
+  img.setAttribute('data-fallback-applied', '1');
+}
+
 
 }

@@ -5,18 +5,26 @@
   </button>
 
   <div class="grid md:grid-cols-[320px_1fr] gap-6 items-start">
-    <img class="w-[320px] h-[500px] object-cover rounded-2xl shadow"
-         [src]="m.posterUrl"
-         [alt]="m.title"
-         (error)="onImgError($event)" />
+    <img
+      class="w-[320px] h-[500px] object-cover rounded-2xl shadow"
+      [src]="m.posterUrl"
+      [alt]="m.title"
+      (error)="onImgError($event)"
+      loading="eager"
+      fetchpriority="high"
+      decoding="async"
+    />
 
     <div>
       <h1 class="text-3xl font-bold mb-2">{{ m.title }}</h1>
       <div class="flex flex-wrap gap-4 text-gray-600 mb-4">
         <span><span class="font-semibold">Year:</span> {{ m.releaseYear }}</span>
-        <span><span class="font-semibold">Director:</span> {{ m.director }}</span>
+        <span *ngIf="m.director"><span class="font-semibold">Director:</span> {{ m.director }}</span>
         <span><span class="font-semibold">Category:</span> {{ m.category }}</span>
-        <span><span class="font-semibold">Rating:</span> {{ m.rating | number:'1.1-1' }}/10</span>
+        <span><span class="font-semibold">Rating:</span> {{ m.rating }}</span>
+        <span *ngIf="m.imdbRating !== undefined">
+          <span class="font-semibold">IMDb:</span> {{ m.imdbRating | number:'1.1-1' }}/10
+        </span>
       </div>
 
       <p class="leading-7 text-gray-800">{{ m.description }}</p>

@@ -1,24 +1,60 @@
-<div>
-  <select class="border rounded px-3 py-2 mb-4" [(ngModel)]="selectedCategory">
-    <option [ngValue]="null" disabled selected>Filter by category</option>
-    <option *ngFor="let c of categories" [ngValue]="c">
-      {{ c }}
-    </option>
+<!-- Filter Bar -->
+<div class="mb-4 flex flex-wrap items-center gap-3">
+  <label class="text-sm font-medium">Category:</label>
+  <select class="border rounded-md px-3 py-1.5 text-sm" [(ngModel)]="selectedCategory">
+    <option *ngFor="let c of categories" [ngValue]="c">{{ c }}</option>
   </select>
+</div>
 
+<!-- Cards -->
+<ng-container *ngIf="filteredMovies?.length; else empty">
+  <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <li
+      *ngFor="let m of filteredMovies; let i = index; trackBy: trackById"
+      class="relative rounded-xl border shadow-sm overflow-hidden bg-white hover:shadow-md transition-shadow"
+    >
+      <!-- Only poster/title inside link -->
+      <a [routerLink]="['/movies', m.id]" class="block">
+        <!-- Explicit aspect ratio + min-height to avoid layout collapse -->
+        <div class="relative w-full overflow-hidden bg-gray-100" style="aspect-ratio: 2 / 3; min-height: 240px;">
+          <img
+          [src]="m.posterUrl || FALLBACK"
+          [alt]="m.title"
+          class="absolute inset-0 w-full h-full object-cover"
+        />
 
-  <div class="flex flex-wrap justify-center">
-    <div *ngFor="let movie of filteredMovies"
-      class="w-60 m-4 rounded-lg overflow-hidden shadow-lg transform transition duration-500 hover:scale-105 hover:shadow-2xl bg-white">
-      <img [src]="movie.posterUrl" [alt]="movie.title" class="w-full h-96 object-cover">
+        </div>
 
-      <div class="p-4">
-        <h3 class="text-xl font-bold mb-2">{{ movie.title }}</h3>
-        <p class="text-gray-600 line-clamp-3">{{ movie.description }}</p>
-        <a [routerLink]="['/movies', movie.id]" class="mt-2 inline-block text-blue-500 hover:text-blue-700">
-          View Details →
+        <div class="p-3">
+          <h3 class="text-base font-semibold leading-tight line-clamp-1">
+            {{ m.title }} <span class="text-xs opacity-70">({{ m.releaseYear }})</span>
+          </h3>
+          <p class="mt-1 text-sm opacity-80 line-clamp-2">{{ m.description }}</p>
+        </div>
+      </a>
+
+      <!-- Buttons row -->
+      <div class="px-3 pb-3 flex items-center gap-2 relative z-10">
+        <button
+          type="button"
+          (click)="add(m.id)"
+          class="px-3 py-1.5 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors"
+        >
+          <ng-container *ngIf="isIn(m.id); else addLabel">Added ✓</ng-container>
+          <ng-template #addLabel>Add to Watchlist</ng-template>
+        </button>
+
+        <a
+          [routerLink]="['/movies', m.id]"
+          class="px-3 py-1.5 rounded-md border text-sm hover:bg-gray-50 transition-colors"
+        >
+          Details
         </a>
       </div>
-    </div>
-  </div>
-</div>
+    </li>
+  </ul>
+</ng-container>
+
+<ng-template #empty>
+  <div class="p-6 text-center opacity-70">No movies found.</div>
+</ng-template>

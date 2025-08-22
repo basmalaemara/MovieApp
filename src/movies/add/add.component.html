@@ -1,78 +1,62 @@
-<div class="max-w-3xl mx-auto bg-white rounded-2xl shadow p-6">
-  <h1 class="text-2xl font-semibold mb-4">Add Movie</h1>
+<form class="max-w-2xl mx-auto p-6 space-y-4" [formGroup]="form" (ngSubmit)="submit()">
+  <h1 class="text-2xl font-bold">Add Movie</h1>
 
-  <form [formGroup]="form" (ngSubmit)="submit()" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <!-- Title -->
-    <div class="md:col-span-2">
-      <label class="block text-sm font-medium mb-1">Title <span class="text-red-600">*</span></label>
-      <input type="text" formControlName="title"
-             class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-      <p class="text-red-600 text-xs mt-1" *ngIf="form.controls.title.touched && form.controls.title.invalid">Title is required.</p>
-    </div>
+  <div class="grid sm:grid-cols-2 gap-4">
+    <label class="block">
+      <span class="text-sm font-medium">Title</span>
+      <input class="mt-1 w-full border rounded px-3 py-2" formControlName="title" />
+    </label>
 
-    <!-- Poster URL -->
-    <div class="md:col-span-2">
-      <label class="block text-sm font-medium mb-1">Poster Image URL</label>
-      <input type="url" formControlName="posterUrl"
-             class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-      <div class="mt-3" *ngIf="form.value.posterUrl">
-        <img [src]="form.value.posterUrl!" alt="Poster preview"
-             class="h-60 rounded-md object-cover border"
-             (error)="form.controls.posterUrl.setValue('')">
-      </div>
-    </div>
+    <label class="block">
+      <span class="text-sm font-medium">Release Year</span>
+      <input class="mt-1 w-full border rounded px-3 py-2" type="number" formControlName="releaseYear" />
+    </label>
 
-    <!-- Category -->
-    <div>
-      <label class="block text-sm font-medium mb-1">Category <span class="text-red-600">*</span></label>
-      <select formControlName="category"
-              class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        <option *ngFor="let c of categoryOptions" [value]="c">{{ c }}</option>
+    <label class="block">
+      <span class="text-sm font-medium">Category</span>
+      <select class="mt-1 w-full border rounded px-3 py-2" formControlName="category">
+        <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
       </select>
-    </div>
+    </label>
 
-    <!-- Rating -->
-    <div>
-      <label class="block text-sm font-medium mb-1">Rating <span class="text-red-600">*</span></label>
-      <select formControlName="rating"
-              class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        <option *ngFor="let r of ratingOptions" [value]="r">{{ r }}</option>
+    <label class="block">
+      <span class="text-sm font-medium">Rating</span>
+      <select class="mt-1 w-full border rounded px-3 py-2" formControlName="rating">
+        <option *ngFor="let r of ratings" [value]="r">{{ r }}</option>
       </select>
-    </div>
+    </label>
 
-    <!-- Release Year -->
-    <div>
-      <label class="block text-sm font-medium mb-1">Release Year <span class="text-red-600">*</span></label>
-      <input type="number" formControlName="releaseYear" placeholder="e.g., 2016"
-             class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-      <p class="text-red-600 text-xs mt-1" *ngIf="form.controls.releaseYear.touched && form.controls.releaseYear.invalid">
-        Please enter a 4-digit year.
-      </p>
-    </div>
+    <label class="block sm:col-span-2">
+      <span class="text-sm font-medium">Director</span>
+      <input class="mt-1 w-full border rounded px-3 py-2" formControlName="director" />
+    </label>
 
-    <!-- Director -->
-    <div>
-      <label class="block text-sm font-medium mb-1">Director</label>
-      <input type="text" formControlName="director"
-             class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-    </div>
+    <label class="block sm:col-span-2">
+      <span class="text-sm font-medium">Cast (comma-separated)</span>
+      <input class="mt-1 w-full border rounded px-3 py-2" placeholder="Name1, Name2" formControlName="cast" />
+    </label>
 
-    <!-- Description -->
-    <div class="md:col-span-2">
-      <label class="block text-sm font-medium mb-1">Description</label>
-      <textarea formControlName="description" rows="4"
-                class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
-    </div>
+    <label class="block">
+      <span class="text-sm font-medium">IMDb rating (0–10)</span>
+      <input class="mt-1 w-full border rounded px-3 py-2" type="number" step="0.1" formControlName="imdbRating" />
+    </label>
 
-    <!-- Actions -->
-    <div class="md:col-span-2 flex items-center gap-3 pt-2">
-      <button type="submit"
-              [disabled]="form.invalid || submitting"
-              class="rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 disabled:opacity-50">
-        {{ submitting ? 'Saving…' : 'Add Movie' }}
-      </button>
-      <button type="button" (click)="reset()" class="rounded-md border px-4 py-2">Reset</button>
-      <a routerLink="/movies/list" class="ml-auto text-sm text-gray-600 hover:underline">Back to list</a>
-    </div>
-  </form>
-</div>
+    <label class="block">
+      <span class="text-sm font-medium">Poster URL</span>
+      <input class="mt-1 w-full border rounded px-3 py-2" formControlName="posterUrl" />
+    </label>
+
+    <label class="block sm:col-span-2">
+      <span class="text-sm font-medium">Description</span>
+      <textarea class="mt-1 w-full border rounded px-3 py-2" rows="4" formControlName="description"></textarea>
+    </label>
+  </div>
+
+  <button
+    class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+    type="submit"
+    [disabled]="submitting || form.invalid"
+  >
+    {{ submitting ? 'Adding…' : 'Add Movie' }}
+  </button>
+</form>

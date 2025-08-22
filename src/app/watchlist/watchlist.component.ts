@@ -1,38 +1,67 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Observable, switchMap, map } from 'rxjs';
-
+import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { combineLatest } from 'rxjs';
+import { MovieService, Movie } from '../../core/services/movie.service';
 import { WatchlistService } from '../services/watchlist.service';
-import { MovieService } from '../services/movie.service';
-import { Movie } from '../interfaces/movie';
+import { Category } from '../enums/category.enum';
+
+const FALLBACK = 'https://placehold.co/400x600?text=No+Image';
 
 @Component({
   selector: 'app-watchlist',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule, FormsModule], // needed for [(ngModel)]
   templateUrl: './watchlist.component.html',
-  styleUrls: ['./watchlist.component.css']
 })
-export class WatchlistComponent implements OnInit {
-  public watchlist$!: Observable<Movie[]>;
+export class WatchlistComponent {
+  FALLBACK = FALLBACK;
+
+  // Category enum in UI (plus 'All')
+  categories: (Category | 'All')[] = ['All', ...Object.values(Category)];
+  selectedCategory: Category | 'All' = 'All';
+
+  // Rendered list
+  filteredMovies: Movie[] = [];
+
+  // Internal source = movies ∩ watchlist
+  private inWatchlistMovies: Movie[] = [];
 
   constructor(
-    private watchlistService: WatchlistService,
-    private movieService: MovieService
-  ) {}
-
-  ngOnInit(): void {
-    this.watchlist$ = this.watchlistService.getWatchlist().pipe(
-      switchMap(watchlistIds => {
-        return this.movieService.getMovies().pipe(
-          map(allMovies => allMovies.filter(movie => watchlistIds.includes(movie.id)))
-        );
-      })
+    private movies: MovieService,
+    public watchlist: WatchlistService
+  ) {
+    combineLatest([this.movies.getMovies(), this.watchlist.watchlist$]).subscribe(
+      ([all, ids]) => {
+        this.inWatchlistMovies = all.filter(m => ids.has(String(m.id)));
+        this.applyFilter();
+      }
     );
   }
 
- 
-  removeFromWatchlist(movieId: string): void {
-    this.watchlistService.removeFromWatchlist(movieId);
+  // Called by (change) on <select>
+  applyFilter(): void {
+    const sel = this.selectedCategory;
+    this.filteredMovies =
+      sel === 'All'
+        ? this.inWatchlistMovies
+        : this.inWatchlistMovies.filter(m => m.category === sel);
+  }
+
+  // Buttons
+  toggleWatchlist(id: string): void {
+    this.watchlist.toggle(id);
+    // list refreshes via subscription
+  }
+
+  isIn(id: string): boolean {
+    return this.watchlist.has(id);
+  }
+
+  trackById(_: number, m: Movie) { return m.id; }
+
+  onImgError(ev: Event): void {
+    (ev.target as HTMLImageElement).src = FALLBACK;
   }
 }

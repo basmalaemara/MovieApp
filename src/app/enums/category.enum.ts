@@ -8,5 +8,6 @@ export enum Category {
   Thriller = 'THRILLER',
   Documentary = 'DOCUMENTARY',
   Animation = 'ANIMATION',
-  Adventure = 'ADVENTURE'
+  Adventure = 'ADVENTURE',
+  BIOGRAPHY='Biography'
 }
